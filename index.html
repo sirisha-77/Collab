@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gujarat Restaurant Dashboard</title>
+  <!-- React & ReactDOM via CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel to allow JSX in browser (for demo) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+    .header-bar {
+      background-color: #4caf50;
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+    .menu-list {
+      flex: 2;
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-y: auto;
+    }
+    .menu-list h2 {
+      margin-top: 0;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 0;
+    }
+    .menu-item .item-info h3 {
+      margin: 0;
+    }
+    .menu-item button {
+      padding: 8px 12px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .menu-item button:hover {
+      background: #45a049;
+    }
+    .order-summary {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+    }
+    .order-summary h2 {
+      margin-top: 0;
+    }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .order-item .buttons button {
+      padding: 4px 8px;
+      margin-left: 4px;
+      background: #ff5722;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .order-item .buttons button:hover {
+      background: #e64a19;
+    }
+    .order-total {
+      margin-top: auto;
+      font-size: 1.2em;
+      text-align: right;
+    }
+    .checkout-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px;
+      background: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .checkout-btn:hover {
+      background: #e68a00;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function Header({ title }) {
+      return (
+        <header className="header-bar">
+          <h1>{title}</h1>
+        </header>
+      );
+    }
+
+    function MenuItem({ item, addToOrder }) {
+      return (
+        <div className="menu-item">
+          <div className="item-info">
+            <h3>{item.name}</h3>
+            <p>{item.description}</p>
+            <p>₹ {item.price}</p>
+          </div>
+          <button onClick={() => addToOrder(item)}>Add</button>
+        </div>
+      );
+    }
+
+    function MenuList({ menu, addToOrder }) {
+      return (
+        <div className="menu-list">
+          <h2>Menu</h2>
+          {menu.map(item => (
+            <MenuItem key={item.id} item={item} addToOrder={addToOrder} />
+          ))}
+        </div>
+      );
+    }
+
+    function OrderSummary({ orderItems, addToOrder, removeFromOrder }) {
+      const total = orderItems.reduce((sum, o) => sum + o.price * o.quantity, 0);
+
+      return (
+        <div className="order-summary">
+          <h2>Order Summary</h2>
+          {orderItems.length === 0 && <p>No items added yet.</p>}
+          {orderItems.map(o => (
+            <div key={o.id} className="order-item">
+              <span>{o.name} × {o.quantity}</span>
+              <span>₹ {o.price * o.quantity}</span>
+              <div className="buttons">
+                <button onClick={() => removeFromOrder(o)}>-</button>
+                <button onClick={() => addToOrder(o)}>+</button>
+              </div>
+            </div>
+          ))}
+          <div className="order-total">
+            <strong>Total: ₹ {total}</strong>
+          </div>
+          {orderItems.length > 0 && <button className="checkout-btn">Checkout</button>}
+        </div>
+      );
+    }
+
+    function App() {
+      const menuData = [
+        { id: 1, name: 'Dhokla', description: 'Soft steamed Gujarati snack', price: 50 },
+        { id: 2, name: 'Thepla', description: 'Spiced flatbread with fenugreek', price: 40 },
+        { id: 3, name: 'Undhiyu', description: 'Mixed vegetable winter delicacy', price: 120 },
+        { id: 4, name: 'Fafda Jalebi Combo', description: 'Crispy fafda with sweet jalebi', price: 80 },
+      ];
+
+      const [orderItems, setOrderItems] = useState([]);
+
+      const addToOrder = (menuItem) => {
+        setOrderItems(prev => {
+          const existing = prev.find(o => o.id === menuItem.id);
+          if (existing) {
+            return prev.map(o =>
+              o.id === menuItem.id ? { ...o, quantity: o.quantity + 1 } : o
+            );
+          } else {
+            return [...prev, { ...menuItem, quantity: 1 }];
+          }
+        });
+      };
+
+      const removeFromOrder = (menuItem) => {
+        setOrderItems(prev =>
+          prev
+            .map(o =>
+              o.id === menuItem.id ? { ...o, quantity: o.quantity - 1 } : o
+            )
+            .filter(o => o.quantity > 0)
+        );
+      };
+
+      return (
+        <div className="app-container">
+          <Header title="Gujarat Restaurant Dashboard" />
+          <div className="main-content">
+            <MenuList menu={menuData} addToOrder={addToOrder} />
+            <OrderSummary
+              orderItems={orderItems}
+              addToOrder={addToOrder}
+              removeFromOrder={removeFromOrder}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
